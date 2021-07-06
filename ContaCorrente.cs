@@ -2,24 +2,27 @@
 using System.Collections.Generic;
 using System.Text;
 
+
 namespace ByteBank
 {
     class ContaCorrente
     {
+        public static double TaxaOperacao { get; private set; }
+        public static int TotalDeContasCriadas { get; private set; }
         public Cliente Titular { get; set; }
-        public int Agencia { get; set; }
-        public int Numero { get; set; }
+        public int Agencia { get; }                     
+        public int Numero { get; }
 
         private double _saldo = 0;
         public double Saldo
-        {
+        {            
             get
             {
                 return _saldo;
             }
             set
             {
-                if (value < 0)
+                if (value <= 0)
                 {
                     return;
                 }
@@ -29,8 +32,23 @@ namespace ByteBank
 
         public ContaCorrente(int agencia, int numero)
         {
+            if (agencia <= 0)
+            {
+                throw new ArgumentException("agencia não pode ser  menor ou igual a 0.", nameof(agencia));
+            } 
+            if (numero <= 0)
+            {
+                throw new ArgumentException("numero não pode ser  menor ou igual a 0.", nameof(numero));
+            }
+                
+
             Agencia = agencia;
             Numero = numero;
+
+            TotalDeContasCriadas++;
+            TaxaOperacao = 30 / TotalDeContasCriadas;
+            
+           
 
         }
 
@@ -39,15 +57,21 @@ namespace ByteBank
         
        
 
-        public bool Sacar(double valor)
+        public void Sacar(double valor)
         {
+            
+            if (valor < 0)
+            {
+                throw new ArgumentException("Valor inválido para saque.", nameof(valor));
+            }
+
             if (_saldo < valor)
             {
-                return false;
+                throw new SaldoInsuficienteException(Saldo, valor);
             }
 
             _saldo -= valor;
-            return true;
+            
         }
 
         public void Depositar(double valor)
@@ -55,16 +79,22 @@ namespace ByteBank
             _saldo += valor;
         }
 
-        public bool Transferir(double valor, ContaCorrente contaDestino)
+        public void Transferir(double valor, ContaCorrente contaDestino)
         {
-            if (_saldo < valor)
+            if (valor < 0)
             {
-                return false;
+                throw new ArgumentException("Valor inválido para a transferência. ", nameof(valor));
             }
 
-            _saldo -= valor;
+            if (_saldo < valor)
+            {
+                throw new SaldoInsuficienteException(Saldo, valor);
+            }
+
+
+            Sacar(valor);
             contaDestino.Depositar(valor);
-            return true;
+            
 
         }
 
